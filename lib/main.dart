@@ -1,6 +1,5 @@
+import 'package:app_financas/telas/home.dart';
 import 'package:flutter/material.dart';
-
-import 'home.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,12 +11,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Aplicativo de finanças',
+      debugShowCheckedModeBanner: false,
+      title: 'Controle Financeiro',
       theme: ThemeData(
-
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        useMaterial3: true,
       ),
-      home: Home(),
+      home: const Home(),
     );
   }
 }
