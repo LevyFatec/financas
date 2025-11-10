@@ -4,6 +4,7 @@ import '../controllers/transacao_controller.dart';
 import '../widgets/button.dart';
 import '../widgets/textos.dart';
 import 'add_transaction_page.dart';
+import '../main.dart'; // para acessar moedaNotifier
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -38,8 +39,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final formatador = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard Financeiro'),
@@ -64,9 +63,14 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       const Textos('Saldo Atual', Colors.black),
                       const SizedBox(height: 8),
-                      Textos(
-                        formatador.format(saldo),
-                        saldo >= 0 ? Colors.green : Colors.red,
+                      ValueListenableBuilder<String>(
+                        valueListenable: moedaNotifier,
+                        builder: (_, moeda, __) {
+                          return Textos(
+                            '$moeda ${saldo.toStringAsFixed(2)}',
+                            saldo >= 0 ? Colors.green : Colors.red,
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -96,7 +100,15 @@ class _DashboardPageState extends State<DashboardPage> {
                                 color: Colors.green, size: 40),
                             const Textos('Receitas', Colors.black),
                             const SizedBox(height: 8),
-                            Textos(formatador.format(receitas), Colors.green),
+                            ValueListenableBuilder<String>(
+                              valueListenable: moedaNotifier,
+                              builder: (_, moeda, __) {
+                                return Textos(
+                                  '$moeda ${receitas.toStringAsFixed(2)}',
+                                  Colors.green,
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -118,7 +130,15 @@ class _DashboardPageState extends State<DashboardPage> {
                                 color: Colors.red, size: 40),
                             const Textos('Despesas', Colors.black),
                             const SizedBox(height: 8),
-                            Textos(formatador.format(despesas), Colors.red),
+                            ValueListenableBuilder<String>(
+                              valueListenable: moedaNotifier,
+                              builder: (_, moeda, __) {
+                                return Textos(
+                                  '$moeda ${despesas.toStringAsFixed(2)}',
+                                  Colors.red,
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),

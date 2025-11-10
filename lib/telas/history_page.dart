@@ -3,6 +3,7 @@ import '../controllers/transacao_controller.dart';
 import '../models/transacao_model.dart';
 import 'package:intl/intl.dart';
 import 'pie_chart_page.dart';
+import '../main.dart'; // Para moedaNotifier
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -52,7 +53,7 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
       body: Column(
         children: [
-          // 🧩 Filtros - 1 parte
+          // 🧩 Filtros
           Expanded(
             flex: 1,
             child: Padding(
@@ -90,7 +91,7 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ),
 
-          // 📋 Lista de transações - 6 partes
+          // 📋 Lista de transações
           Expanded(
             flex: 6,
             child: RefreshIndicator(
@@ -106,11 +107,16 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                     title: Text(t.descricao),
                     subtitle: Text("${t.categoria} - ${DateFormat('dd/MM/yyyy').format(t.data)}"),
-                    trailing: Text(
-                      "R\$ ${t.valor.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        color: t.tipo == 'receita' ? Colors.green : Colors.red,
-                      ),
+                    trailing: ValueListenableBuilder<String>(
+                      valueListenable: moedaNotifier,
+                      builder: (_, moeda, __) {
+                        return Text(
+                          "$moeda ${t.valor.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            color: t.tipo == 'receita' ? Colors.green : Colors.red,
+                          ),
+                        );
+                      },
                     ),
                   );
                 },
@@ -118,7 +124,7 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ),
 
-          // 🥧 Botão gráfico - 1 parte
+          // 🥧 Botão gráfico
           Expanded(
             flex: 1,
             child: Center(
