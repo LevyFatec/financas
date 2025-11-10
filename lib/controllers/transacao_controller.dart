@@ -1,21 +1,28 @@
+import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../models/transacao_model.dart';
-import 'package:intl/intl.dart';
 
 class TransacaoController {
   final dbHelper = DatabaseHelper();
 
+  /// Adiciona uma nova transação (receita ou despesa)
   Future<int> adicionar(Transacao transacao) async {
     final db = await dbHelper.database;
     return await db.insert('transacoes', transacao.toMap());
   }
 
-  Future<List<Transacao>> listar() async {
+  /// Lista todas as transações (opcionalmente limitado)
+  Future<List<Transacao>> listar({int? limit}) async {
     final db = await dbHelper.database;
-    final result = await db.query('transacoes', orderBy: 'data DESC');
+    final result = await db.query(
+      'transacoes',
+      orderBy: 'data DESC',
+      limit: limit,
+    );
     return result.map((e) => Transacao.fromMap(e)).toList();
   }
 
+  /// Lista transações por mês e ano
   Future<List<Transacao>> listarPorMes(int mes, int ano) async {
     final db = await dbHelper.database;
     final inicio = DateTime(ano, mes, 1);
@@ -29,33 +36,7 @@ class TransacaoController {
     return result.map((e) => Transacao.fromMap(e)).toList();
   }
 
-  Future<Map<String, double>> despesasPorCategoria(int mes, int ano) async {
-    final db = await dbHelper.database;
-    final inicio = DateTime(ano, mes, 1);
-    final fim = DateTime(ano, mes + 1, 0);
-    final result = await db.rawQuery('''
-      SELECT categoria, SUM(valor) as total
-      FROM transacoes
-      WHERE tipo = 'despesa' AND data BETWEEN ? AND ?
-      GROUP BY categoria
-    ''', [inicio.toIso8601String(), fim.toIso8601String()]);
-
-    Map<String, double> mapa = {};
-    for (var row in result) {
-      mapa[row['categoria'] as String] = (row['total'] as num).toDouble();
-    }
-    return mapa;
-  }
-
-  Future<double> calcularSaldo() async {
-    final db = await dbHelper.database;
-    final receitas = await db.rawQuery("SELECT SUM(valor) as total FROM transacoes WHERE tipo='receita'");
-    final despesas = await db.rawQuery("SELECT SUM(valor) as total FROM transacoes WHERE tipo='despesa'");
-    final r = receitas.first['total'] ?? 0.0;
-    final d = despesas.first['total'] ?? 0.0;
-    return (r as num).toDouble() - (d as num).toDouble();
-  }
-
+  /// Atualiza uma transação existente
   Future<int> atualizar(Transacao transacao) async {
     final db = await dbHelper.database;
     return await db.update(
@@ -66,8 +47,52 @@ class TransacaoController {
     );
   }
 
+  /// Deleta uma transação pelo ID
   Future<int> deletar(int id) async {
     final db = await dbHelper.database;
     return await db.delete('transacoes', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Calcula o saldo total (receitas - despesas)
+  Future<double> calcularSaldo() async {
+    final db = await dbHelper.database;
+
+    final receitas = await db.rawQuery(
+        "SELECT SUM(valor) as total FROM transacoes WHERE tipo='receita'");
+    final despesas = await db.rawQuery(
+        "SELECT SUM(valor) as total FROM transacoes WHERE tipo='despesa'");
+
+    final r = receitas.first['total'] ?? 0.0;
+    final d = despesas.first['total'] ?? 0.0;
+
+    return (r as double? ?? 0.0) - (d as double? ?? 0.0);
+  }
+
+  /// Soma o valor total de receitas ou despesas
+  Future<double> somarPorTipo(String tipo) async {
+    final db = await dbHelper.database;
+    final result = await db.rawQuery(
+        "SELECT SUM(valor) as total FROM transacoes WHERE tipo = ?", [tipo]);
+    return (result.first['total'] as double?) ?? 0.0;
+  }
+
+  /// Retorna mapa com soma de despesas agrupadas por categoria (para o gráfico)
+  Future<Map<String, double>> despesasPorCategoria(int mes, int ano) async {
+    final db = await dbHelper.database;
+    final inicio = DateTime(ano, mes, 1);
+    final fim = DateTime(ano, mes + 1, 0);
+
+    final result = await db.rawQuery('''
+      SELECT categoria, SUM(valor) as total 
+      FROM transacoes 
+      WHERE tipo = 'despesa' AND data BETWEEN ? AND ?
+      GROUP BY categoria
+    ''', [inicio.toIso8601String(), fim.toIso8601String()]);
+
+    final Map<String, double> mapa = {};
+    for (var e in result) {
+      mapa[e['categoria'] as String] = (e['total'] as num).toDouble();
+    }
+    return mapa;
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../controllers/transacao_controller.dart';
+import '../widgets/textos.dart';
+import '../widgets/button.dart';
 
 class PieChartPage extends StatefulWidget {
   final int mes;
@@ -30,49 +33,141 @@ class _PieChartPageState extends State<PieChartPage> {
   @override
   Widget build(BuildContext context) {
     final total = despesas.values.fold(0.0, (a, b) => a + b);
+    final meses = [
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro'
+    ];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Despesas por Categoria"),
+        title: Text('Despesas - ${meses[widget.mes - 1]} ${widget.ano}'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
       ),
-      body: despesas.isEmpty
-          ? const Center(child: Text("Nenhuma despesa encontrada neste mês."))
-          : Column(
-        children: [
-          const SizedBox(height: 20),
-          Expanded(
-            child: PieChart(
-              PieChartData(
-                sectionsSpace: 2,
-                centerSpaceRadius: 60,
-                sections: despesas.entries.map((e) {
-                  final percent = (e.value / total * 100).toStringAsFixed(1);
-                  return PieChartSectionData(
-                    title: "${e.key}\n$percent%",
-                    value: e.value,
-                    radius: 100,
-                    titleStyle: const TextStyle(fontSize: 12, color: Colors.white),
-                  );
-                }).toList(),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: despesas.isEmpty
+            ? const Center(
+          child: Textos('Nenhuma despesa neste mês.', Colors.grey),
+        )
+            : Column(
+          children: [
+            // 🥧 Gráfico principal - 3 partes
+            Expanded(
+              flex: 3,
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                elevation: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 4,
+                      centerSpaceRadius: 50,
+                      sections: despesas.entries.map((e) {
+                        final percent = (e.value / total * 100);
+                        final color = _gerarCorPorCategoria(e.key);
+                        return PieChartSectionData(
+                          color: color,
+                          title: "${percent.toStringAsFixed(1)}%",
+                          value: e.value,
+                          radius: 90,
+                          titleStyle: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-          const Divider(),
-          Expanded(
-            child: ListView(
-              children: despesas.entries.map((e) {
-                return ListTile(
-                  title: Text(e.key),
-                  trailing: Text(
-                    "R\$ ${e.value.toStringAsFixed(2)}",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+
+            const SizedBox(height: 10),
+
+            // 📋 Lista de categorias - 2 partes
+            Expanded(
+              flex: 2,
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: ListView(
+                    children: despesas.entries.map((e) {
+                      final cor = _gerarCorPorCategoria(e.key);
+                      final percent = (e.value / total * 100);
+                      final moeda = NumberFormat.currency(
+                          locale: 'pt_BR', symbol: 'R\$');
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: cor,
+                          child: const Icon(Icons.label, color: Colors.white),
+                        ),
+                        title: Text(e.key,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold)),
+                        subtitle: Text(
+                            '${percent.toStringAsFixed(1)}% do total'),
+                        trailing: Textos(
+                            moeda.format(e.value), Colors.black87),
+                      );
+                    }).toList(),
                   ),
-                );
-              }).toList(),
+                ),
+              ),
             ),
-          )
-        ],
+
+            const SizedBox(height: 10),
+
+            // 🔙 Botão de voltar - 1 parte
+            Expanded(
+              flex: 1,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Botoes(
+                    'Voltar',
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  /// Gera cor para cada categoria (visual padrão e consistente)
+  Color _gerarCorPorCategoria(String categoria) {
+    switch (categoria) {
+      case 'Alimentação':
+        return Colors.orange;
+      case 'Transporte':
+        return Colors.blue;
+      case 'Lazer':
+        return Colors.purple;
+      case 'Saúde':
+        return Colors.redAccent;
+      case 'Salário':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 }

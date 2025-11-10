@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../controllers/transacao_controller.dart';
-import '../models/transacao_model.dart';
-import 'add_transaction_page.dart';
 import 'package:intl/intl.dart';
+import '../controllers/transacao_controller.dart';
+import '../widgets/button.dart';
+import '../widgets/textos.dart';
+import 'add_transaction_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -12,74 +13,143 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  final _controller = TransacaoController();
-  double saldo = 0;
-  List<Transacao> transacoes = [];
+  final controller = TransacaoController();
+
+  double saldo = 0.0;
+  double receitas = 0.0;
+  double despesas = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _carregarDados();
+    _atualizarResumo();
   }
 
-  Future<void> _carregarDados() async {
-    final lista = await _controller.listar();
-    final total = await _controller.calcularSaldo();
+  Future<void> _atualizarResumo() async {
+    final s = await controller.calcularSaldo();
+    final r = await controller.somarPorTipo('receita');
+    final d = await controller.somarPorTipo('despesa');
     setState(() {
-      transacoes = lista;
-      saldo = total;
+      saldo = s;
+      receitas = r;
+      despesas = d;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final formatador = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: _carregarDados,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+      appBar: AppBar(
+        title: const Text('Dashboard Financeiro'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
-            Text(
-              "Saldo atual:",
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            Text(
-              "R\$ ${saldo.toStringAsFixed(2)}",
-              style: TextStyle(
-                fontSize: 28,
-                color: saldo >= 0 ? Colors.green : Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text("Últimas transações:", style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            ...transacoes.map((t) => ListTile(
-              leading: Icon(
-                t.tipo == 'receita' ? Icons.arrow_upward : Icons.arrow_downward,
-                color: t.tipo == 'receita' ? Colors.green : Colors.red,
-              ),
-              title: Text(t.descricao),
-              subtitle: Text("${t.categoria} - ${DateFormat('dd/MM/yyyy').format(t.data)}"),
-              trailing: Text(
-                "R\$ ${t.valor.toStringAsFixed(2)}",
-                style: TextStyle(
-                  color: t.tipo == 'receita' ? Colors.green : Colors.red,
+            // SALDO ATUAL
+            Expanded(
+              flex: 2,
+              child: Card(
+                color: Colors.blue.shade50,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Textos('Saldo Atual', Colors.black),
+                      const SizedBox(height: 8),
+                      Textos(
+                        formatador.format(saldo),
+                        saldo >= 0 ? Colors.green : Colors.red,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            )),
+            ),
+
+            const SizedBox(height: 10),
+
+            // RECEITAS E DESPESAS
+            Expanded(
+              flex: 3,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Card(
+                      color: Colors.green.shade50,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.arrow_upward,
+                                color: Colors.green, size: 40),
+                            const Textos('Receitas', Colors.black),
+                            const SizedBox(height: 8),
+                            Textos(formatador.format(receitas), Colors.green),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Card(
+                      color: Colors.red.shade50,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.arrow_downward,
+                                color: Colors.red, size: 40),
+                            const Textos('Despesas', Colors.black),
+                            const SizedBox(height: 8),
+                            Textos(formatador.format(despesas), Colors.red),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // BOTÃO ÚNICO
+            Expanded(
+              flex: 2,
+              child: Center(
+                child: Botoes(
+                  "Adicionar Transação",
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddTransactionPage(),
+                      ),
+                    );
+                    _atualizarResumo();
+                  },
+                ),
+              ),
+            ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddTransactionPage()),
-          );
-          _carregarDados();
-        },
-        child: const Icon(Icons.add),
       ),
     );
   }
