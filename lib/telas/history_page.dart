@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/transacao_controller.dart';
 import '../models/transacao_model.dart';
 import 'package:intl/intl.dart';
+import 'pie_chart_page.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -13,6 +14,24 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   final _controller = TransacaoController();
   List<Transacao> transacoes = [];
+  int mesSelecionado = DateTime.now().month;
+  int anoSelecionado = DateTime.now().year;
+
+  final List<int> anos = [2023, 2024, 2025, 2026];
+  final List<String> meses = [
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro"
+  ];
 
   @override
   void initState() {
@@ -21,35 +40,87 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _carregarHistorico() async {
-    final lista = await _controller.listar();
+    final lista = await _controller.listarPorMes(mesSelecionado, anoSelecionado);
     setState(() => transacoes = lista);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: _carregarHistorico,
-        child: ListView.builder(
-          itemCount: transacoes.length,
-          itemBuilder: (context, index) {
-            final t = transacoes[index];
-            return ListTile(
-              leading: Icon(
-                t.tipo == 'receita' ? Icons.arrow_upward : Icons.arrow_downward,
-                color: t.tipo == 'receita' ? Colors.green : Colors.red,
-              ),
-              title: Text(t.descricao),
-              subtitle: Text("${t.categoria} - ${DateFormat('dd/MM/yyyy').format(t.data)}"),
-              trailing: Text(
-                "R\$ ${t.valor.toStringAsFixed(2)}",
-                style: TextStyle(
-                  color: t.tipo == 'receita' ? Colors.green : Colors.red,
+      appBar: AppBar(
+        title: const Text('Histórico de Transações'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.pie_chart),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PieChartPage(mes: mesSelecionado, ano: anoSelecionado),
                 ),
+              );
+            },
+          )
+        ],
+      ),
+      body: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              DropdownButton<int>(
+                value: mesSelecionado,
+                items: List.generate(
+                  12,
+                      (i) => DropdownMenuItem(
+                    value: i + 1,
+                    child: Text(meses[i]),
+                  ),
+                ),
+                onChanged: (v) {
+                  setState(() => mesSelecionado = v!);
+                  _carregarHistorico();
+                },
               ),
-            );
-          },
-        ),
+              const SizedBox(width: 12),
+              DropdownButton<int>(
+                value: anoSelecionado,
+                items: anos
+                    .map((a) => DropdownMenuItem(value: a, child: Text(a.toString())))
+                    .toList(),
+                onChanged: (v) {
+                  setState(() => anoSelecionado = v!);
+                  _carregarHistorico();
+                },
+              ),
+            ],
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _carregarHistorico,
+              child: ListView.builder(
+                itemCount: transacoes.length,
+                itemBuilder: (context, index) {
+                  final t = transacoes[index];
+                  return ListTile(
+                    leading: Icon(
+                      t.tipo == 'receita' ? Icons.arrow_upward : Icons.arrow_downward,
+                      color: t.tipo == 'receita' ? Colors.green : Colors.red,
+                    ),
+                    title: Text(t.descricao),
+                    subtitle: Text("${t.categoria} - ${DateFormat('dd/MM/yyyy').format(t.data)}"),
+                    trailing: Text(
+                      "R\$ ${t.valor.toStringAsFixed(2)}",
+                      style: TextStyle(
+                        color: t.tipo == 'receita' ? Colors.green : Colors.red,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
