@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../controllers/transacao_controller.dart';
 import '../widgets/button.dart';
 import '../widgets/textos.dart';
 import 'add_transaction_page.dart';
-import '../main.dart'; // para acessar moedaNotifier
+import '../main.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -15,7 +14,6 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final controller = TransacaoController();
-
   double saldo = 0.0;
   double receitas = 0.0;
   double despesas = 0.0;
@@ -30,143 +28,109 @@ class _DashboardPageState extends State<DashboardPage> {
     final s = await controller.calcularSaldo();
     final r = await controller.somarPorTipo('receita');
     final d = await controller.somarPorTipo('despesa');
-    setState(() {
-      saldo = s;
-      receitas = r;
-      despesas = d;
-    });
+    if(mounted) {
+      setState(() {
+        saldo = s;
+        receitas = r;
+        despesas = d;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard Financeiro'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-      ),
+      // AppBar já vem do Home
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // SALDO ATUAL
-            Expanded(
-              flex: 2,
-              child: Card(
-                color: Colors.blue.shade50,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Textos('Saldo Atual', Colors.black),
-                      const SizedBox(height: 8),
-                      ValueListenableBuilder<String>(
-                        valueListenable: moedaNotifier,
-                        builder: (_, moeda, __) {
-                          return Textos(
-                            '$moeda ${saldo.toStringAsFixed(2)}',
-                            saldo >= 0 ? Colors.green : Colors.red,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+            // CARD SALDO
+            Card(
+              color: colorScheme.primaryContainer,
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Textos('Saldo Atual', cor: colorScheme.onPrimaryContainer, tamanho: 18),
+                    const SizedBox(height: 8),
+                    ValueListenableBuilder<String>(
+                      valueListenable: moedaNotifier,
+                      builder: (_, moeda, __) {
+                        return Textos(
+                          '$moeda ${saldo.toStringAsFixed(2)}',
+                          cor: saldo >= 0 ? Colors.green[700] : Colors.red[700],
+                          tamanho: 32,
+                          peso: FontWeight.bold,
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),
+            const SizedBox(height: 16),
 
-            const SizedBox(height: 10),
-
-            // RECEITAS E DESPESAS
-            Expanded(
-              flex: 3,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Card(
-                      color: Colors.green.shade50,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.arrow_upward,
-                                color: Colors.green, size: 40),
-                            const Textos('Receitas', Colors.black),
-                            const SizedBox(height: 8),
-                            ValueListenableBuilder<String>(
-                              valueListenable: moedaNotifier,
-                              builder: (_, moeda, __) {
-                                return Textos(
-                                  '$moeda ${receitas.toStringAsFixed(2)}',
-                                  Colors.green,
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Card(
-                      color: Colors.red.shade50,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.arrow_downward,
-                                color: Colors.red, size: 40),
-                            const Textos('Despesas', Colors.black),
-                            const SizedBox(height: 8),
-                            ValueListenableBuilder<String>(
-                              valueListenable: moedaNotifier,
-                              builder: (_, moeda, __) {
-                                return Textos(
-                                  '$moeda ${despesas.toStringAsFixed(2)}',
-                                  Colors.red,
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            // RESUMO
+            Row(
+              children: [
+                Expanded(child: _buildInfoCard('Receitas', receitas, Colors.green)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildInfoCard('Despesas', despesas, Colors.red)),
+              ],
             ),
 
-            const SizedBox(height: 10),
+            const Spacer(),
 
-            // BOTÃO ÚNICO
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: Botoes(
-                  "Adicionar Transação",
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddTransactionPage(),
-                      ),
-                    );
-                    _atualizarResumo();
-                  },
-                ),
-              ),
+            // BOTÃO
+            Botoes(
+              "Nova Transação",
+              icone: Icons.add,
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddTransactionPage()),
+                );
+                _atualizarResumo();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String titulo, double valor, Color corIcone) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Icon(
+              titulo == 'Receitas' ? Icons.arrow_circle_up : Icons.arrow_circle_down,
+              color: corIcone,
+              size: 30,
+            ),
+            const SizedBox(height: 8),
+            Textos(titulo, tamanho: 14),
+            const SizedBox(height: 4),
+            ValueListenableBuilder<String>(
+              valueListenable: moedaNotifier,
+              builder: (_, moeda, __) {
+                return Textos(
+                  '$moeda ${valor.toStringAsFixed(2)}',
+                  cor: corIcone,
+                  peso: FontWeight.bold,
+                  tamanho: 16,
+                );
+              },
             ),
           ],
         ),

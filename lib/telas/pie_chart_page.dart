@@ -58,7 +58,7 @@ class _PieChartPageState extends State<PieChartPage> {
         padding: const EdgeInsets.all(16),
         child: despesas.isEmpty
             ? const Center(
-          child: Textos('Nenhuma despesa neste mês.', Colors.grey),
+          child: Textos('Nenhuma despesa neste mês.', cor: Colors.grey),
         )
             : Column(
           children: [
@@ -124,7 +124,7 @@ class _PieChartPageState extends State<PieChartPage> {
                         subtitle: Text(
                             '${percent.toStringAsFixed(1)}% do total'),
                         trailing: Textos(
-                            moeda.format(e.value), Colors.black87),
+                            moeda.format(e.value), cor: Colors.black),
                       );
                     }).toList(),
                   ),

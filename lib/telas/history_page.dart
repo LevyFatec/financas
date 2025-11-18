@@ -3,7 +3,7 @@ import '../controllers/transacao_controller.dart';
 import '../models/transacao_model.dart';
 import 'package:intl/intl.dart';
 import 'pie_chart_page.dart';
-import '../main.dart'; // Para moedaNotifier
+import '../main.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});

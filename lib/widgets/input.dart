@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
 
-
 class Input extends StatelessWidget {
-  final String rotulo;
   final String label;
+  final String? hint;
   final TextEditingController controller;
+  final TextInputType keyboardType;
+  final String? Function(String?)? validator;
 
-
-  const Input(this.rotulo, this.label, {required this.controller, super.key});
-
+  const Input(
+      this.label, {
+        required this.controller,
+        this.hint,
+        this.keyboardType = TextInputType.text,
+        this.validator,
+        super.key,
+      });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      decoration: InputDecoration(labelText: rotulo, hintText: label),
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+      ),
     );
   }
 }

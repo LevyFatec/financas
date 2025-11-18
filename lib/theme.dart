@@ -1,98 +1,69 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // 🎨 Paleta de cores principal
-  static const Color primaryColor = Color(0xFF1565C0); // Azul principal
-  static const Color secondaryColor = Color(0xFFFF9800); // Laranja
-  static const Color backgroundColor = Color(0xFFF5F5F5); // Cinza claro
-  static const Color textPrimary = Color(0xFF212121); // Texto padrão
-  static const Color textSecondary = Color(0xFF757575); // Texto secundário
-  static const Color cardColor = Colors.white;
+  // Cores Base
+  static const Color primaryColor = Color(0xFF1565C0);
+  static const Color secondaryColor = Color(0xFFFF9800);
 
-  // 🌈 Esquema de cores
-  static final ColorScheme colorScheme = ColorScheme.fromSeed(
+  // Esquemas de Cores
+  static final ColorScheme lightScheme = ColorScheme.fromSeed(
     seedColor: primaryColor,
     primary: primaryColor,
     secondary: secondaryColor,
-    background: backgroundColor,
-    surface: cardColor,
+    brightness: Brightness.light,
+    surface: Colors.white,
+    background: const Color(0xFFF5F5F5),
   );
 
-  // 🖋️ Estilos de texto
-  static const TextTheme textTheme = TextTheme(
-    headlineLarge: TextStyle(
-      fontSize: 26,
-      fontWeight: FontWeight.bold,
-      color: textPrimary,
-    ),
-    headlineMedium: TextStyle(
-      fontSize: 22,
-      fontWeight: FontWeight.w600,
-      color: textPrimary,
-    ),
-    bodyLarge: TextStyle(
-      fontSize: 18,
-      color: textPrimary,
-    ),
-    bodyMedium: TextStyle(
-      fontSize: 16,
-      color: textSecondary,
-    ),
-    labelLarge: TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-      color: Colors.white,
-    ),
+  static final ColorScheme darkScheme = ColorScheme.fromSeed(
+    seedColor: primaryColor,
+    primary: primaryColor,
+    secondary: secondaryColor,
+    brightness: Brightness.dark,
+    surface: const Color(0xFF1E1E1E),
+    background: const Color(0xFF121212),
   );
 
-  // 🧱 Estilo de botões e inputs
-  static final ElevatedButtonThemeData elevatedButtonTheme =
-  ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: primaryColor,
-      foregroundColor: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-      elevation: 3,
-    ),
-  );
+  // Método para obter o tema
+  static ThemeData getTheme(bool isDark) {
+    final scheme = isDark ? darkScheme : lightScheme;
 
-  static final InputDecorationTheme inputDecorationTheme = InputDecorationTheme(
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: primaryColor, width: 1.5),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: secondaryColor, width: 2),
-    ),
-    labelStyle: const TextStyle(color: textSecondary, fontSize: 16),
-    hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-  );
-
-  // 🪄 Tema principal
-  static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: colorScheme,
-      scaffoldBackgroundColor: backgroundColor,
-      cardColor: cardColor,
-      textTheme: textTheme,
-      elevatedButtonTheme: elevatedButtonTheme,
-      inputDecorationTheme: inputDecorationTheme,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 2,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: scheme.background,
+      cardColor: scheme.surface,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
+        elevation: 0,
         centerTitle: true,
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: scheme.primary,
+          foregroundColor: scheme.onPrimary,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: scheme.primary, width: 2),
+        ),
+        labelStyle: TextStyle(color: scheme.onSurfaceVariant),
+        contentPadding: const EdgeInsets.all(16),
       ),
     );
   }
